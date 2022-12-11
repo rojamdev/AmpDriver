@@ -22,7 +22,7 @@
 #define LPF_INTERVAL	1.0f
 
 #define HPF_ID			"hpf"
-#define HPF_NAME		"Tone"
+#define HPF_NAME		"Tight"
 #define HPF_MIN			20.0f
 #define HPF_MAX			250.0f
 #define HPF_DEFAULT		100.0f

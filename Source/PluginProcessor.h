@@ -71,7 +71,7 @@ private:
     int numChannels;
     double sampleRate;
 
-    std::vector<std::unique_ptr<Filter>> lowPassFilters;
+    std::vector<std::unique_ptr<Filter>> lowPassFilters, highPassFilters;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmpDriverAudioProcessor)

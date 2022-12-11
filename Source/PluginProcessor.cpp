@@ -17,12 +17,11 @@ AmpDriverAudioProcessor::AmpDriverAudioProcessor()
 {
     numChannels = getNumInputChannels();
     sampleRate = getSampleRate();
-    
-    lowPassFilters.resize(numChannels);
 
     for (int channel = 0; channel < numChannels; channel++)
     {
-        lowPassFilters[channel] = std::make_unique<Filter>();
+        lowPassFilters.push_back(std::make_unique<Filter>());
+        highPassFilters.push_back(std::make_unique<Filter>());
     }
 
     level = 1.0f;
@@ -32,6 +31,7 @@ AmpDriverAudioProcessor::AmpDriverAudioProcessor()
     apvts.addParameterListener(LEVEL_ID, this);
     apvts.addParameterListener(DRIVE_ID, this);
     apvts.addParameterListener(LPF_ID, this);
+    apvts.addParameterListener(HPF_ID, this);
 
     apvts.state = juce::ValueTree(JucePlugin_Name);
 }
@@ -63,6 +63,13 @@ ParameterLayout AmpDriverAudioProcessor::createParameterLayout()
                                                            lpfRange,
                                                            LPF_DEFAULT));
 
+    juce::NormalisableRange<float> hpfRange(HPF_MIN, HPF_MAX, HPF_INTERVAL);
+    hpfRange.setSkewForCentre(HPF_DEFAULT);
+    params.add(std::make_unique<juce::AudioParameterFloat>(HPF_ID,
+                                                           HPF_NAME,
+                                                           hpfRange,
+                                                           HPF_DEFAULT));
+
     return params;
 }
 
@@ -75,10 +82,12 @@ void AmpDriverAudioProcessor::parameterChanged(const juce::String& parameterID, 
         drive = dBtoRatio(newValue);
 
     else if (parameterID == LPF_ID)
-    {
         for (int channel = 0; channel < numChannels; channel++)
             lowPassFilters[channel]->coefficients = Coefficients::makeLowPass(sampleRate, newValue);
-    }
+
+    else if (parameterID == HPF_ID)
+        for (int channel = 0; channel < numChannels; channel++)
+            highPassFilters[channel]->coefficients = Coefficients::makeHighPass(sampleRate, newValue);
 }
 
 
@@ -152,6 +161,9 @@ void AmpDriverAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     {
         lowPassFilters[channel]->coefficients = Coefficients::makeLowPass(sampleRate,
                                                                           *apvts.getRawParameterValue(LPF_ID));
+
+        highPassFilters[channel]->coefficients = Coefficients::makeHighPass(sampleRate,
+                                                                            *apvts.getRawParameterValue(HPF_ID));
     }
 }
 
@@ -201,6 +213,7 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         for (int sample = 0; sample < bufferLength; ++sample)
         {
             channelData[sample] = lowPassFilters[channel]->processSample(channelData[sample]);
+            channelData[sample] = highPassFilters[channel]->processSample(channelData[sample]);
             
             channelData[sample] = atan(drive * channelData[sample]) / sqrt(drive);
             channelData[sample] *= level;
