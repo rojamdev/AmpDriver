@@ -2,12 +2,14 @@
 
 #include <JuceHeader.h>
 #include "FirstOrderIIR.h"
+#include "Constants.h"
 
 typedef juce::AudioProcessorValueTreeState::ParameterLayout ParameterLayout;
 
 //==============================================================================
 class AmpDriverAudioProcessor  : public juce::AudioProcessor, 
-                                 public juce::AudioProcessorValueTreeState::Listener
+                                 public juce::AudioProcessorValueTreeState::Listener,
+                                 public juce::ChangeBroadcaster
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
@@ -55,11 +57,19 @@ public:
     
 private:
     //==============================================================================
-    inline float dBtoRatio(float dB) { return pow(10, dB / 20); }
     ParameterLayout createParameterLayout();
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    inline float dBtoRatio(float dB) 
+    { 
+        return pow(10, dB / 20); 
+    }
+
     //==============================================================================
-    float level;
+    float level, drive;
+    std::vector<std::unique_ptr<FirstOrderIIR>> lowPassFilters, highPassFilters;
+
+    int numChannels;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmpDriverAudioProcessor)

@@ -7,6 +7,13 @@ public:
 		feedbackPolarity = 1.0f;
 	}
 
+	FirstOrderIIR(float alpha, bool isHighPass)
+	{
+		this->alpha = alpha;
+		setType(isHighPass);
+		lastSample = 0.0f;
+	}
+
 	float processSample(float sample) 
 	{
 		float newSample = ((1 - alpha) * sample) + (feedbackPolarity * (alpha * lastSample));
@@ -19,9 +26,14 @@ public:
 		this->alpha = alpha;
 	}
 
-	void setType(bool makeHighPass)
+	void setType(bool isHighPass)
 	{
-		feedbackPolarity = makeHighPass ? -1.0f : 1.0f;
+		feedbackPolarity = isHighPass ? -1.0f : 1.0f;
+	}
+
+	void reset()
+	{
+		lastSample = 0.0f;
 	}
 
 private:
