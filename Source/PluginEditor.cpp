@@ -43,10 +43,7 @@ void AmpDriverAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle(60, 260, 170, 80, BORDER_CORNER_SIZE, BORDER_THICKNESS);
 }
 
-void AmpDriverAudioProcessorEditor::resized()
-{
-
-}
+void AmpDriverAudioProcessorEditor::resized() {}
 
 void AmpDriverAudioProcessorEditor::createControl(juce::String parameterID, 
                                                   juce::String parameterName,

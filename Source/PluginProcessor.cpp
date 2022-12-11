@@ -212,11 +212,14 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 
         for (int sample = 0; sample < bufferLength; ++sample)
         {
-            channelData[sample] = lowPassFilters[channel]->processSample(channelData[sample]);
-            channelData[sample] = highPassFilters[channel]->processSample(channelData[sample]);
-            
-            channelData[sample] = atan(drive * channelData[sample]) / sqrt(drive);
-            channelData[sample] *= level;
+            auto x = channelData[sample];
+
+            x = atan(drive * x) / sqrt(drive);
+            x = highPassFilters[channel]->processSample(x);
+            x = lowPassFilters[channel]->processSample(x);
+            x *= level;
+
+            channelData[sample] = x;
         }
     }
 }
