@@ -15,15 +15,15 @@
 #define DRIVE_INTERVAL	0.1f
 
 #define LPF_ID			"lpf"
-#define LPF_NAME		"Tight"
-#define LPF_MIN			0.01f
-#define LPF_MAX			1.0f
-#define LPF_DEFAULT		0.9f
-#define LPF_INTERVAL	0.01f
+#define LPF_NAME		"Tone"
+#define LPF_MIN			500.0f
+#define LPF_MAX			20000.0f
+#define LPF_DEFAULT		2000.0f
+#define LPF_INTERVAL	1.0f
 
 #define HPF_ID			"hpf"
 #define HPF_NAME		"Tone"
-#define HPF_MIN			0.01f
-#define HPF_MAX			1.0f
-#define HPF_DEFAULT		0.9f
-#define HPF_INTERVAL	0.01f
+#define HPF_MIN			20.0f
+#define HPF_MAX			250.0f
+#define HPF_DEFAULT		100.0f
+#define HPF_INTERVAL	1.0f

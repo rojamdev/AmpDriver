@@ -15,26 +15,23 @@ AmpDriverAudioProcessor::AmpDriverAudioProcessor()
     apvts(*this, nullptr, "PARAMS", createParameterLayout())
 #endif
 {
+    numChannels = getNumInputChannels();
+    sampleRate = getSampleRate();
+    
+    lowPassFilters.resize(numChannels);
+
+    for (int channel = 0; channel < numChannels; channel++)
+    {
+        lowPassFilters[channel] = std::make_unique<Filter>();
+    }
+
     level = 1.0f;
     drive = 1.0f;
-
-    // Filter setup    
-    numChannels = getTotalNumInputChannels();
-
-    lowPassFilters.resize(numChannels);
-    highPassFilters.resize(numChannels);
-
-    for (int channel = 0; channel < numChannels; ++channel)
-    {
-        lowPassFilters[channel] = std::make_unique<FirstOrderIIR>(LPF_DEFAULT, false);
-        highPassFilters[channel] = std::make_unique<FirstOrderIIR>(HPF_DEFAULT, true);
-    }
 
     // Parameter listeners
     apvts.addParameterListener(LEVEL_ID, this);
     apvts.addParameterListener(DRIVE_ID, this);
     apvts.addParameterListener(LPF_ID, this);
-    apvts.addParameterListener(HPF_ID, this);
 
     apvts.state = juce::ValueTree(JucePlugin_Name);
 }
@@ -59,19 +56,12 @@ ParameterLayout AmpDriverAudioProcessor::createParameterLayout()
                                                                                           DRIVE_INTERVAL),
                                                            DRIVE_DEFAULT));
 
+    juce::NormalisableRange<float> lpfRange(LPF_MIN, LPF_MAX, LPF_INTERVAL);
+    lpfRange.setSkewForCentre(LPF_DEFAULT);
     params.add(std::make_unique<juce::AudioParameterFloat>(LPF_ID,
                                                            LPF_NAME,
-                                                           juce::NormalisableRange<float>(LPF_MIN,
-                                                                                          LPF_MAX,
-                                                                                          LPF_INTERVAL),
+                                                           lpfRange,
                                                            LPF_DEFAULT));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(HPF_ID,
-                                                           HPF_NAME,
-                                                           juce::NormalisableRange<float>(HPF_MIN,
-                                                                                          HPF_MAX,
-                                                                                          HPF_INTERVAL),
-                                                           HPF_DEFAULT));
 
     return params;
 }
@@ -85,12 +75,10 @@ void AmpDriverAudioProcessor::parameterChanged(const juce::String& parameterID, 
         drive = dBtoRatio(newValue);
 
     else if (parameterID == LPF_ID)
-        for (int channel = 0; channel < numChannels; ++channel)
-            lowPassFilters[channel]->setAlpha(LPF_DEFAULT);
-
-    else if (parameterID == HPF_ID)
-        for (int channel = 0; channel < numChannels; ++channel)
-            highPassFilters[channel]->setAlpha(HPF_DEFAULT);
+    {
+        for (int channel = 0; channel < numChannels; channel++)
+            lowPassFilters[channel]->coefficients = Coefficients::makeLowPass(sampleRate, newValue);
+    }
 }
 
 
@@ -134,8 +122,7 @@ double AmpDriverAudioProcessor::getTailLengthSeconds() const
 
 int AmpDriverAudioProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1;
 }
 
 int AmpDriverAudioProcessor::getCurrentProgram()
@@ -159,10 +146,12 @@ void AmpDriverAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void AmpDriverAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    for (int channel = 0; channel < numChannels; ++channel)
+    this->sampleRate = sampleRate;
+
+    for (int channel = 0; channel < numChannels; channel++)
     {
-        lowPassFilters[channel]->reset();
-        highPassFilters[channel]->reset();
+        lowPassFilters[channel]->coefficients = Coefficients::makeLowPass(sampleRate,
+                                                                          *apvts.getRawParameterValue(LPF_ID));
     }
 }
 
@@ -179,10 +168,6 @@ bool AmpDriverAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
@@ -204,23 +189,10 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // level = dBtoRatio(*apvts.getRawParameterValue("level"));
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    
+    // Main processing loop
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
@@ -229,8 +201,7 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         for (int sample = 0; sample < bufferLength; ++sample)
         {
             channelData[sample] = lowPassFilters[channel]->processSample(channelData[sample]);
-            channelData[sample] = highPassFilters[channel]->processSample(channelData[sample]);
-
+            
             channelData[sample] = atan(drive * channelData[sample]) / sqrt(drive);
             channelData[sample] *= level;
         }

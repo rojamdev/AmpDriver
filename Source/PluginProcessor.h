@@ -1,10 +1,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "FirstOrderIIR.h"
 #include "Constants.h"
 
 typedef juce::AudioProcessorValueTreeState::ParameterLayout ParameterLayout;
+typedef juce::dsp::IIR::Filter<float> Filter;
+typedef juce::dsp::IIR::Coefficients<float> Coefficients;
 
 //==============================================================================
 class AmpDriverAudioProcessor  : public juce::AudioProcessor, 
@@ -67,9 +68,10 @@ private:
 
     //==============================================================================
     float level, drive;
-    std::vector<std::unique_ptr<FirstOrderIIR>> lowPassFilters, highPassFilters;
-
     int numChannels;
+    double sampleRate;
+
+    std::vector<std::unique_ptr<Filter>> lowPassFilters;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmpDriverAudioProcessor)

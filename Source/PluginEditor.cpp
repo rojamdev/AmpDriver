@@ -12,7 +12,6 @@ AmpDriverAudioProcessorEditor::AmpDriverAudioProcessorEditor (AmpDriverAudioProc
     createControl(LEVEL_ID, LEVEL_NAME, levelSlider, levelLabel, levelAttachment, 0, 0, 100, 100);
     createControl(DRIVE_ID, DRIVE_NAME, driveSlider, driveLabel, driveAttachment, 100, 0, 100, 100);
     createControl(LPF_ID, LPF_NAME, lpfSlider, lpfLabel, lpfAttachment, 200, 0, 100, 100);
-    createControl(HPF_ID, HPF_NAME, hpfSlider, hpfLabel, hpfAttachment, 300, 0, 100, 100);
 }
 
 AmpDriverAudioProcessorEditor::~AmpDriverAudioProcessorEditor()
