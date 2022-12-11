@@ -4,8 +4,6 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="QELhLd" name="AmpDriver">
     <GROUP id="{E9C609A4-C824-9CAC-3044-6C3405801E01}" name="Source">
-      <FILE id="Xv95gK" name="ParameterValues.h" compile="0" resource="0"
-            file="Source/ParameterValues.h"/>
       <FILE id="IAOPS5" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="Y8kuT0" name="PluginProcessor.h" compile="0" resource="0"

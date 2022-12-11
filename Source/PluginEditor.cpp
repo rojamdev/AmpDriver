@@ -5,14 +5,20 @@
 AmpDriverAudioProcessorEditor::AmpDriverAudioProcessorEditor (AmpDriverAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    setSize (400, 500);
+    setSize (290, 390);
     setLookAndFeel(&lookAndFeel);
     defaultFont.setBold(true);
 
-    createControl(LEVEL_ID, LEVEL_NAME, levelSlider, levelLabel, levelAttachment, 0, 0, 100, 100);
-    createControl(DRIVE_ID, DRIVE_NAME, driveSlider, driveLabel, driveAttachment, 100, 0, 100, 100);
-    createControl(LPF_ID, LPF_NAME, lpfSlider, lpfLabel, lpfAttachment, 200, 0, 100, 100);
-    createControl(HPF_ID, HPF_NAME, hpfSlider, hpfLabel, hpfAttachment, 300, 0, 100, 100);
+    createControl(LEVEL_ID, LEVEL_NAME, levelSlider, levelLabel, levelAttachment, 
+                  BORDER_POS_X + 30, BORDER_POS_Y + 10, CONTROL_WIDTH, CONTROL_HEIGHT, false);
+
+    createControl(DRIVE_ID, DRIVE_NAME, driveSlider, driveLabel, driveAttachment, 
+                  160, BORDER_POS_Y + 10,
+                  CONTROL_WIDTH, CONTROL_HEIGHT, false);
+
+    createControl(LPF_ID, LPF_NAME, lpfSlider, lpfLabel, lpfAttachment, 50, 130, 80, 80, false);
+
+    createControl(HPF_ID, HPF_NAME, hpfSlider, hpfLabel, hpfAttachment, 160, 130, 80, 80, false);
 }
 
 AmpDriverAudioProcessorEditor::~AmpDriverAudioProcessorEditor()
@@ -23,8 +29,18 @@ AmpDriverAudioProcessorEditor::~AmpDriverAudioProcessorEditor()
 //==============================================================================
 void AmpDriverAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (juce::Colours::black);
+    g.fillAll(juce::Colours::black);
+    g.setColour(juce::Colours::darkgrey);
+
+    g.drawRoundedRectangle(BORDER_POS_X, 
+                           BORDER_POS_Y, 
+                           BORDER_WIDTH, 
+                           BORDER_HEIGHT, 
+                           BORDER_CORNER_SIZE,
+                           BORDER_THICKNESS);
+
+    g.setColour(juce::Colours::white);
+    g.drawRoundedRectangle(60, 260, 170, 80, BORDER_CORNER_SIZE, BORDER_THICKNESS);
 }
 
 void AmpDriverAudioProcessorEditor::resized()
@@ -38,14 +54,19 @@ void AmpDriverAudioProcessorEditor::createControl(juce::String parameterID,
                                                   juce::Label& label,
                                                   std::unique_ptr<SliderAttachment>& attachment,
                                                   int posX, int posY, 
-                                                  int height, int width)
+                                                  int height, int width,
+                                                  bool showTextBox)
 {   
     addAndMakeVisible(slider);
     attachment = std::make_unique<SliderAttachment>(audioProcessor.apvts, parameterID, slider);
     slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 100, height / 5);
     slider.setBounds(posX, posY, height, width);
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+
+    juce::Slider::TextEntryBoxPosition boxPos;
+    if (showTextBox) boxPos = juce::Slider::TextBoxBelow;
+    else boxPos = juce::Slider::NoTextBox;
+    slider.setTextBoxStyle(boxPos, true, 100, height / 5);
 
     addAndMakeVisible(label);
     label.setText(parameterName, juce::dontSendNotification);

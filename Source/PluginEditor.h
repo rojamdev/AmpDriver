@@ -25,7 +25,20 @@ private:
                        juce::Label& label,
                        std::unique_ptr<SliderAttachment>& attachment,
                        int posX, int posY, 
-                       int height, int width);
+                       int height, int width,
+                       bool showTextBox);
+
+    //==============================================================================
+    const int
+        BORDER_POS_X = 20,
+        BORDER_POS_Y = 20,
+        BORDER_WIDTH = 250,
+        BORDER_HEIGHT = 350,
+        BORDER_CORNER_SIZE = 10,
+        BORDER_THICKNESS = 2,
+
+        CONTROL_WIDTH = 80,
+        CONTROL_HEIGHT = 80;
 
     //==============================================================================
     AmpDriverAudioProcessor& audioProcessor;
