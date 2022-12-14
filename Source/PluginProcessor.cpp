@@ -161,9 +161,10 @@ void AmpDriverAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     {
         lowPassFilters[channel]->coefficients = Coefficients::makeLowPass(sampleRate,
                                                                           *apvts.getRawParameterValue(LPF_ID));
-
         highPassFilters[channel]->coefficients = Coefficients::makeHighPass(sampleRate,
                                                                             *apvts.getRawParameterValue(HPF_ID));
+        lowPassFilters[channel]->reset();
+        highPassFilters[channel]->reset();
     }
 }
 

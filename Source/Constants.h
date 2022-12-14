@@ -17,13 +17,13 @@
 #define LPF_ID			"lpf"
 #define LPF_NAME		"TONE"
 #define LPF_MIN			500.0f
-#define LPF_MAX			20000.0f
+#define LPF_MAX			10000.0f
 #define LPF_DEFAULT		2000.0f
 #define LPF_INTERVAL	1.0f
 
 #define HPF_ID			"hpf"
 #define HPF_NAME		"TIGHT"
 #define HPF_MIN			20.0f
-#define HPF_MAX			250.0f
+#define HPF_MAX			400.0f
 #define HPF_DEFAULT		100.0f
 #define HPF_INTERVAL	1.0f
