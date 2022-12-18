@@ -49,6 +49,8 @@ private:
     juce::Label levelLabel, driveLabel, lpfLabel, hpfLabel;
     juce::Slider levelSlider, driveSlider, lpfSlider, hpfSlider;
 
+    juce::Label nameLabel;
+
     std::unique_ptr<SliderAttachment> 
         levelAttachment, driveAttachment, lpfAttachment, hpfAttachment;
 

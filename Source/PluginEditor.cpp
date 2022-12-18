@@ -16,9 +16,16 @@ AmpDriverAudioProcessorEditor::AmpDriverAudioProcessorEditor (AmpDriverAudioProc
                   160, BORDER_POS_Y + 10,
                   CONTROL_WIDTH, CONTROL_HEIGHT, false);
 
-    createControl(LPF_ID, LPF_NAME, lpfSlider, lpfLabel, lpfAttachment, 50, 130, 80, 80, false);
+    createControl(LPF_ID, LPF_NAME, lpfSlider, lpfLabel, lpfAttachment, 50, 130, 
+                  CONTROL_WIDTH, CONTROL_HEIGHT, false);
 
-    createControl(HPF_ID, HPF_NAME, hpfSlider, hpfLabel, hpfAttachment, 160, 130, 80, 80, false);
+    createControl(HPF_ID, HPF_NAME, hpfSlider, hpfLabel, hpfAttachment, 160, 130, 
+                  CONTROL_WIDTH, CONTROL_HEIGHT, false);
+
+    addAndMakeVisible(nameLabel);
+    nameLabel.setText(BOX_TEXT, juce::NotificationType::dontSendNotification);
+    nameLabel.setBounds(105, 275, 80, 50);
+    nameLabel.setFont(defaultFont);
 }
 
 AmpDriverAudioProcessorEditor::~AmpDriverAudioProcessorEditor()

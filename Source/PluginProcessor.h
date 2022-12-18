@@ -60,18 +60,24 @@ private:
     //==============================================================================
     ParameterLayout createParameterLayout();
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    float saturateSample(int channel, float sample, float gain);
 
     inline float dBtoRatio(float dB) 
     { 
         return pow(10, dB / 20); 
     }
 
+    inline float calcBandpassQ(float gain)
+    {
+        return ((gain / Q_CONSTANT) + 0.01);
+    }
+
     //==============================================================================
-    float level, drive;
+    float level, drive, bandpassQ;
     int numChannels;
     double sampleRate;
 
-    std::vector<std::unique_ptr<Filter>> lowPassFilters, highPassFilters;
+    std::vector<std::unique_ptr<Filter>> lowPassFilters, highPassFilters, bandpassFilters;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmpDriverAudioProcessor)

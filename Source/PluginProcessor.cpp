@@ -15,17 +15,19 @@ AmpDriverAudioProcessor::AmpDriverAudioProcessor()
     apvts(*this, nullptr, "PARAMS", createParameterLayout())
 #endif
 {
+    sampleRate = 0.0;
+    level = dBtoRatio(LEVEL_DEFAULT);
+    drive = dBtoRatio(DRIVE_DEFAULT);
+    bandpassQ = calcBandpassQ(DRIVE_DEFAULT);
+
     numChannels = getNumInputChannels();
-    sampleRate = getSampleRate();
 
     for (int channel = 0; channel < numChannels; channel++)
     {
         lowPassFilters.push_back(std::make_unique<Filter>());
         highPassFilters.push_back(std::make_unique<Filter>());
+        bandpassFilters.push_back(std::make_unique<Filter>());
     }
-
-    level = 1.0f;
-    drive = 1.0f;
 
     // Parameter listeners
     apvts.addParameterListener(LEVEL_ID, this);
@@ -79,7 +81,16 @@ void AmpDriverAudioProcessor::parameterChanged(const juce::String& parameterID, 
         level = dBtoRatio(newValue);
 
     else if (parameterID == DRIVE_ID)
+    {
         drive = dBtoRatio(newValue);
+        
+        // Calculates higher values for the Q factor of pre-saturation bandpass filtering
+        // for higher amounts of saturation and then calculates coefficients for bandpass filter
+        for (int channel = 0; channel < numChannels; channel++)
+            bandpassFilters[channel]->coefficients = Coefficients::makeBandPass(sampleRate,
+                                                                                BANDPASS_FREQ,
+                                                                                calcBandpassQ(newValue));
+    }
 
     else if (parameterID == LPF_ID)
         for (int channel = 0; channel < numChannels; channel++)
@@ -89,7 +100,6 @@ void AmpDriverAudioProcessor::parameterChanged(const juce::String& parameterID, 
         for (int channel = 0; channel < numChannels; channel++)
             highPassFilters[channel]->coefficients = Coefficients::makeHighPass(sampleRate, newValue);
 }
-
 
 //==============================================================================
 const juce::String AmpDriverAudioProcessor::getName() const
@@ -124,33 +134,17 @@ bool AmpDriverAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double AmpDriverAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
+double AmpDriverAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 
-int AmpDriverAudioProcessor::getNumPrograms()
-{
-    return 1;
-}
+int AmpDriverAudioProcessor::getNumPrograms() { return 1; }
 
-int AmpDriverAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
+int AmpDriverAudioProcessor::getCurrentProgram() { return 0; }
 
-void AmpDriverAudioProcessor::setCurrentProgram (int index)
-{
-}
+void AmpDriverAudioProcessor::setCurrentProgram (int index) {}
 
-const juce::String AmpDriverAudioProcessor::getProgramName (int index)
-{
-    return {};
-}
+const juce::String AmpDriverAudioProcessor::getProgramName (int index) { return {}; }
 
-void AmpDriverAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
-}
+void AmpDriverAudioProcessor::changeProgramName (int index, const juce::String& newName) {}
 
 //==============================================================================
 void AmpDriverAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -163,15 +157,19 @@ void AmpDriverAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
                                                                           *apvts.getRawParameterValue(LPF_ID));
         highPassFilters[channel]->coefficients = Coefficients::makeHighPass(sampleRate,
                                                                             *apvts.getRawParameterValue(HPF_ID));
+        highPassFilters[channel]->coefficients = Coefficients::makeBandPass(sampleRate,
+                                                                            BANDPASS_FREQ,
+                                                                            calcBandpassQ(
+                                                                                *apvts.getRawParameterValue(DRIVE_ID)
+                                                                            ));
         lowPassFilters[channel]->reset();
         highPassFilters[channel]->reset();
+        bandpassFilters[channel]->reset();
     }
 }
 
 void AmpDriverAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -215,8 +213,8 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         {
             auto x = channelData[sample];
 
-            x = atan(drive * x) / sqrt(drive);
             x = highPassFilters[channel]->processSample(x);
+            x = saturateSample(channel, x, drive);
             x = lowPassFilters[channel]->processSample(x);
             x *= level;
 
@@ -225,10 +223,18 @@ void AmpDriverAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     }
 }
 
+float AmpDriverAudioProcessor::saturateSample(int channel, float sample, float gain)
+{
+    auto x = sample;
+    x = bandpassFilters[channel]->processSample(x);
+    x = atan(gain * x) / sqrt(gain);
+    return x;
+}
+
 //==============================================================================
 bool AmpDriverAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor* AmpDriverAudioProcessor::createEditor()
@@ -239,19 +245,13 @@ juce::AudioProcessorEditor* AmpDriverAudioProcessor::createEditor()
 //==============================================================================
 void AmpDriverAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
 }
 
 void AmpDriverAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new AmpDriverAudioProcessor();
