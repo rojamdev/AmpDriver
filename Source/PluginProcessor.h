@@ -73,7 +73,7 @@ private:
     }
 
     //==============================================================================
-    float level, drive, bandpassQ;
+    float level, drive;
     int numChannels;
     double sampleRate;
 

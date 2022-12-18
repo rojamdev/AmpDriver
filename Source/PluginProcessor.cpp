@@ -18,7 +18,6 @@ AmpDriverAudioProcessor::AmpDriverAudioProcessor()
     sampleRate = 0.0;
     level = dBtoRatio(LEVEL_DEFAULT);
     drive = dBtoRatio(DRIVE_DEFAULT);
-    bandpassQ = calcBandpassQ(DRIVE_DEFAULT);
 
     numChannels = getNumInputChannels();
 
